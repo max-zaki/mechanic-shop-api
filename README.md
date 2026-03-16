@@ -23,6 +23,8 @@ mechanic-shop-api/
 │   ├── models.py            # SQLAlchemy models
 │   ├── utils/
 │   │   └── util.py          # JWT encode/decode & token_required decorator
+│   ├── static/
+│   │   └── swagger.yaml     # OpenAPI 2.0 spec
 │   └── blueprints/
 │       ├── customers/
 │       │   ├── __init__.py
@@ -40,6 +42,11 @@ mechanic-shop-api/
 │           ├── __init__.py
 │           ├── routes.py
 │           └── schemas.py
+├── tests/
+│   ├── test_customers.py
+│   ├── test_mechanics.py
+│   ├── test_service_tickets.py
+│   └── test_inventory.py
 ├── app.py                   # Entry point
 ├── config.py                # Configuration classes
 ├── requirements.txt
@@ -92,6 +99,32 @@ python app.py
 ```
 
 The API will start at `http://127.0.0.1:5000`. Database tables are created automatically on first run.
+
+### 7. View the API documentation
+
+With the app running, open your browser to:
+
+```
+http://127.0.0.1:5000/api/docs
+```
+
+This loads the interactive Swagger UI where you can read descriptions for every endpoint and try requests directly in the browser.
+
+---
+
+## Running Tests
+
+Tests use an in-memory SQLite database and require no external setup. With your virtual environment active, run from the project root:
+
+```bash
+# Windows
+python -m unittest discover tests
+
+# Mac / Linux
+python -m unittest discover tests
+```
+
+All 62 tests should pass.
 
 ---
 

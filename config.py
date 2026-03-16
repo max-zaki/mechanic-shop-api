@@ -16,7 +16,10 @@ class DevelopmentConfig:
     CACHE_DEFAULT_TIMEOUT = 300
 
 class TestingConfig:
-    pass
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    CACHE_TYPE = 'SimpleCache'
+    CACHE_DEFAULT_TIMEOUT = 300
 
 class ProductionConfig:
     pass
