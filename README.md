@@ -5,13 +5,14 @@ A RESTful API for managing a mechanic shop built with Flask, SQLAlchemy, and Mar
 ## Tech Stack
 
 - **Flask** – Web framework
-- **Flask-SQLAlchemy** – ORM for MySQL database
+- **Flask-SQLAlchemy** – ORM for database
 - **Flask-Marshmallow / marshmallow-sqlalchemy** – Serialization & validation
 - **Flask-Limiter** – Rate limiting
 - **Flask-Caching** – Response caching
 - **PyJWT** – JWT token authentication
-- **MySQL** – Database
-- **python-dotenv** – Environment variable management
+- **PostgreSQL** – Production database (Render)
+- **MySQL** – Local development database
+- **Gunicorn** – WSGI server for production
 
 ## Project Structure
 
@@ -47,7 +48,7 @@ mechanic-shop-api/
 │   ├── test_mechanics.py
 │   ├── test_service_tickets.py
 │   └── test_inventory.py
-├── app.py                   # Entry point
+├── flask_app.py             # Entry point
 ├── config.py                # Configuration classes
 ├── requirements.txt
 └── .env                     # Local credentials (not committed)
@@ -95,7 +96,7 @@ CREATE DATABASE mechanics_db;
 ### 6. Run the application
 
 ```bash
-python app.py
+python flask_app.py
 ```
 
 The API will start at `http://127.0.0.1:5000`. Database tables are created automatically on first run.
@@ -109,6 +110,22 @@ http://127.0.0.1:5000/api/docs
 ```
 
 This loads the interactive Swagger UI where you can read descriptions for every endpoint and try requests directly in the browser.
+
+---
+
+## Live Deployment
+
+The API is deployed on Render at:
+
+```
+https://mechanic-shop-api-32w8.onrender.com
+```
+
+Interactive Swagger docs are available at:
+
+```
+https://mechanic-shop-api-32w8.onrender.com/api/docs
+```
 
 ---
 
