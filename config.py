@@ -12,6 +12,8 @@ class DevelopmentConfig:
         f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@localhost/{MYSQL_DATABASE}"
     )
     DEBUG = True
+    CACHE_TYPE = 'SimpleCache'
+    CACHE_DEFAULT_TIMEOUT = 300
 
 class TestingConfig:
     pass

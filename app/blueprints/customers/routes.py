@@ -3,11 +3,38 @@ from marshmallow import ValidationError
 from sqlalchemy import select
 from app.models import Customer, db
 from . import customers_bp
-from .schemas import customer_schema, customers_schema
+from app.extensions import limiter, cache
+from app.utils.util import encode_token, token_required
+from .schemas import customer_schema, customers_schema, login_schema
+
+
+# LOGIN
+@customers_bp.route("/login", methods=['POST'])
+def login():
+    try:
+        credentials = login_schema.load(request.json)
+        email = credentials['email']
+        password = credentials['password']
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+
+    query = select(Customer).where(Customer.email == email)
+    customer = db.session.execute(query).scalars().first()
+
+    if customer and customer.password == password:
+        token = encode_token(customer.id)
+        return jsonify({
+            "status": "success",
+            "message": "Successfully logged in.",
+            "token": token
+        }), 200
+    else:
+        return jsonify({"message": "Invalid email or password"}), 401
 
 
 # CREATE CUSTOMER
 @customers_bp.route("/", methods=['POST'])
+@limiter.limit("5 per day")
 def create_customer():
     try:
         customer_data = customer_schema.load(request.json)
@@ -15,7 +42,7 @@ def create_customer():
         return jsonify(e.messages), 400
 
     query = select(Customer).where(Customer.email == customer_data['email'])
-    existing_customer = db.session.execute(query).scalars().all()
+    existing_customer = db.session.execute(query).scalars().first()
     if existing_customer:
         return jsonify({"error": "Email already associated with an account."}), 400
 
@@ -25,10 +52,14 @@ def create_customer():
     return customer_schema.jsonify(new_customer), 201
 
 
-# GET ALL CUSTOMERS
+# GET ALL CUSTOMERS (paginated)
 @customers_bp.route("/", methods=['GET'])
+@cache.cached(timeout=60)
 def get_customers():
-    query = select(Customer)
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    query = select(Customer).limit(per_page).offset((page - 1) * per_page)
     customers = db.session.execute(query).scalars().all()
     return customers_schema.jsonify(customers)
 
@@ -42,8 +73,21 @@ def get_customer(customer_id):
     return jsonify({"error": "Customer not found."}), 404
 
 
-# UPDATE CUSTOMER
-@customers_bp.route("/<int:customer_id>", methods=['PUT'])
+# GET MY TICKETS (token required)
+@customers_bp.route("/my-tickets", methods=['GET'])
+@token_required
+def get_my_tickets(customer_id):
+    customer = db.session.get(Customer, customer_id)
+    if not customer:
+        return jsonify({"error": "Customer not found."}), 404
+
+    from app.blueprints.service_tickets.schemas import service_tickets_schema
+    return service_tickets_schema.jsonify(customer.tickets), 200
+
+
+# UPDATE CUSTOMER (token required — updates the logged-in customer's own account)
+@customers_bp.route("/", methods=['PUT'])
+@token_required
 def update_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     if not customer:
@@ -61,12 +105,13 @@ def update_customer(customer_id):
     return customer_schema.jsonify(customer), 200
 
 
-# DELETE CUSTOMER
-@customers_bp.route("/<int:customer_id>", methods=['DELETE'])
+# DELETE CUSTOMER (token required — deletes the logged-in customer's own account)
+@customers_bp.route("/", methods=['DELETE'])
+@token_required
 def delete_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     if not customer:
-        return jsonify({"error": "Customer not found."}), 404
+        return jsonify({"error": "Customer not found"}), 404
 
     db.session.delete(customer)
     db.session.commit()

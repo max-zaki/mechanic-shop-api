@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from marshmallow import ValidationError
-from sqlalchemy import select
-from app.models import Mechanic, db
+from sqlalchemy import select, func
+from app.models import Mechanic, ticket_mechanic, db
 from . import mechanics_bp
 from .schemas import mechanic_schema, mechanics_schema
 
@@ -26,6 +26,19 @@ def get_mechanics():
     query = select(Mechanic)
     mechanics = db.session.execute(query).scalars().all()
     return mechanics_schema.jsonify(mechanics)
+
+
+# GET MECHANICS ORDERED BY MOST TICKETS WORKED
+@mechanics_bp.route("/most-worked", methods=['GET'])
+def most_worked_mechanics():
+    query = (
+        select(Mechanic)
+        .outerjoin(ticket_mechanic, Mechanic.id == ticket_mechanic.c.mechanic_id)
+        .group_by(Mechanic.id)
+        .order_by(func.count(ticket_mechanic.c.ticket_id).desc())
+    )
+    mechanics = db.session.execute(query).scalars().all()
+    return mechanics_schema.jsonify(mechanics), 200
 
 
 # UPDATE MECHANIC

@@ -10,11 +10,19 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
+# Association Tables
 ticket_mechanic = db.Table(
     'ticket_mechanic',
     Base.metadata,
     db.Column('ticket_id', db.ForeignKey('tickets.id')),
     db.Column('mechanic_id', db.ForeignKey('mechanics.id'))
+)
+
+ticket_inventory = db.Table(
+    'ticket_inventory',
+    Base.metadata,
+    db.Column('ticket_id', db.ForeignKey('tickets.id')),
+    db.Column('inventory_id', db.ForeignKey('inventory.id'))
 )
 
 
@@ -25,6 +33,7 @@ class Customer(Base):
     name: Mapped[str] = mapped_column(db.String(255), nullable=False)
     email: Mapped[str] = mapped_column(db.String(360), nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(db.String(50), nullable=False)
+    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
 
     tickets: Mapped[List['Ticket']] = db.relationship(back_populates='customer')
 
@@ -42,6 +51,9 @@ class Ticket(Base):
     mechanics: Mapped[List['Mechanic']] = db.relationship(
         secondary=ticket_mechanic, back_populates='tickets'
     )
+    parts: Mapped[List['Inventory']] = db.relationship(
+        secondary=ticket_inventory, back_populates='tickets'
+    )
 
 
 class Mechanic(Base):
@@ -55,4 +67,16 @@ class Mechanic(Base):
 
     tickets: Mapped[List['Ticket']] = db.relationship(
         secondary=ticket_mechanic, back_populates='mechanics'
+    )
+
+
+class Inventory(Base):
+    __tablename__ = 'inventory'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    price: Mapped[float] = mapped_column(db.Float(), nullable=False)
+
+    tickets: Mapped[List['Ticket']] = db.relationship(
+        secondary=ticket_inventory, back_populates='parts'
     )
