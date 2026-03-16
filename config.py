@@ -1,8 +1,5 @@
 import urllib.parse
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class DevelopmentConfig:
     MYSQL_USER = os.getenv("MYSQL_USER")
